@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Chaves - ADM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        :root { --cor-primary: #ff6600; --cor-dark: #333; }
+        .bg-orange { background-color: var(--cor-primary) !important; color: white; }
+        .text-orange { color: var(--cor-primary); }
+        .btn-orange { background-color: var(--cor-primary); color: white; border: none; }
+        .btn-orange:hover { background-color: #e65c00; color: white; }
+        
+        .card-sala { border-left: 5px solid var(--cor-primary); transition: 0.2s; }
+        .card-sala:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .status-livre { color: #198754; font-weight: 800; font-size: 0.9rem; }
+        .status-ocupada { color: #dc3545; font-weight: 800; font-size: 0.9rem; }
+        
+        /* Ajuste para inputs focados ficarem laranjas */
+        .form-control:focus, .form-select:focus {
+            border-color: var(--cor-primary);
+            box-shadow: 0 0 0 0.25rem rgba(255, 102, 0, 0.25);
+        }
+    </style>
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
+
+    <nav class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                🔐 Controle de Chaves
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-light btn-sm" onclick="abrirModalProfessores()">
+                    <i class="bi bi-people-fill"></i> Gerenciar Pessoas
+                </button>
+                <a href="/logout" class="btn btn-danger btn-sm">
+                    <i class="bi bi-box-arrow-right"></i> Sair
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 flex-grow-1">
+        <div class="d-flex align-items-center mb-4">
+            <img src="logo.png" alt="Logo" height="50" class="me-3 rounded">
+            <div>
+                <h3 class="fw-bold text-orange mb-0">Painel de Controle</h3>
+                <small class="text-muted">Administração Central</small>
+            </div>
+        </div>
+        
+        <div id="container-salas" class="row g-4 mb-5"></div>
+    </div>
+
+    <footer class="mt-5 py-4 bg-white border-top text-center">
+        <div class="container">
+            <p class="mb-1 text-dark">Desenvolvido por <strong class="text-orange">Talita Machado</strong></p>
+            <small class="text-muted">Desenvolvimento de Serviços e APIs • Adalto Sparremberger • 2025 • Unisenac</small>
+        </div>
+    </footer>
+
+    <div class="modal fade" id="modalEmprestar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-orange">
+                    <h5 class="modal-title">Emprestar Chave</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="emprestar-chave-id">
+                    
+                    <label class="form-label fw-bold">Quem vai pegar a chave?</label>
+                    <select id="select-professor" class="form-select mb-3 focus-orange"></select>
+                    
+                    <div class="card p-3 bg-light border-0">
+                        <div class="d-flex justify-content-between">
+                            <span>Cargo:</span>
+                            <span class="fw-bold" id="info-cargo">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span>WhatsApp:</span>
+                            <span class="fw-bold" id="info-whats">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-orange" onclick="confirmarEmprestimo()">Confirmar Empréstimo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalProfessores" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Gerenciar Professores/Funcionários</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    
+                    <div class="row g-2 mb-4 align-items-end bg-light p-3 rounded">
+                        <div class="col-md-4">
+                            <label class="small text-muted">Nome Completo</label>
+                            <input type="text" id="novo-nome" class="form-control" placeholder="Ex: Ana Silva">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">Cargo</label>
+                            <input type="text" id="novo-cargo" class="form-control" placeholder="Ex: Professor">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">WhatsApp</label>
+                            <input type="text" id="novo-whatsapp" class="form-control" placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-success w-100" onclick="addProfessor()">
+                                <i class="bi bi-plus-lg"></i> Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-muted border-bottom pb-2">Cadastrados</h6>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Cargo</th>
+                                    <th>WhatsApp</th>
+                                    <th class="text-end">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-professores"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // --- LÓGICA DO SISTEMA ---
+        let usuariosCache = [];
+
+        // 1. Carregar Dados Iniciais
+        async function carregarDados() {
+            try {
+                // Carrega usuários
+                const resUser = await fetch('/api/usuarios');
+                usuariosCache = await resUser.json();
+
+                // Carrega salas
+                const resSalas = await fetch('/api/dados');
+                const dados = await resSalas.json();
+                renderizarSalas(dados);
+            } catch (error) {
+                console.error("Erro:", error);
+                window.location.href = "/";
+            }
+        }
+
+        // 2. Renderizar Cards
+        function renderizarSalas(lista) {
+            const container = document.getElementById('container-salas');
+            container.innerHTML = '';
+            
+            const salasAgrupadas = {};
+            lista.forEach(item => {
+                if(!salasAgrupadas[item.sala_nome]) salasAgrupadas[item.sala_nome] = [];
+                salasAgrupadas[item.sala_nome].push(item);
+            });
+
+            for (const [nomeSala, chaves] of Object.entries(salasAgrupadas)) {
+                let htmlChaves = '';
+                
+                chaves.forEach(c => {
+                    const isLivre = c.status === 'livre';
+                    const isReserva = c.tipo === 'reserva';
+                    const corBadge = isReserva ? 'bg-warning text-dark' : 'bg-secondary';
+                    const textoTipo = isReserva ? 'RESERVA' : 'NORMAL';
+                    
+                    let conteudoChave = '';
+                    
+                    if(isLivre) {
+                        conteudoChave = `
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="status-livre"><i class="bi bi-circle-fill text-success" style="font-size: 8px;"></i> LIVRE</span>
+                                <button class="btn btn-sm btn-outline-primary" onclick="abrirModalEmprestar(${c.chave_id})">Emprestar</button>
+                            </div>
+                        `;
+                    } else {
+                        conteudoChave = `
+                            <div class="alert alert-danger p-2 mb-0 mt-2 border-0" style="background-color: #ffe5e5;">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="bi bi-person-fill me-2"></i>
+                                    <strong>${c.usuario_nome}</strong>
+                                </div>
+                                <small class="text-muted d-block ms-4 mb-2">${c.usuario_cargo}</small>
+                                <button class="btn btn-sm btn-dark w-100" onclick="devolverChave(${c.chave_id})">
+                                    <i class="bi bi-arrow-return-left"></i> Devolver
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    htmlChaves += `
+                        <div class="border rounded p-3 mb-2 bg-white shadow-sm position-relative overflow-hidden">
+                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                                <span class="fw-bold text-secondary" style="font-size: 0.8rem;">${textoTipo}</span>
+                                <span class="badge ${corBadge}" style="font-size: 0.7rem;">${c.tipo}</span>
+                            </div>
+                            ${conteudoChave}
+                        </div>
+                    `;
+                });
+
+                const card = `
+                    <div class="col-md-4">
+                        <div class="card card-sala h-100 border-0 shadow">
+                            <div class="card-body">
+                                <h5 class="fw-bold mb-3 d-flex align-items-center">
+                                    <i class="bi bi-door-closed me-2 text-orange"></i> ${nomeSala}
+                                </h5>
+                                ${htmlChaves}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', card);
+            }
+        }
+
+        // 3. Empréstimo
+        function abrirModalEmprestar(id) {
+            document.getElementById('emprestar-chave-id').value = id;
+            
+            const select = document.getElementById('select-professor');
+            select.innerHTML = '<option value="">Selecione...</option>';
+            
+            usuariosCache.forEach(u => {
+                select.innerHTML += `
+                    <option value="${u.nome}" 
+                            data-cargo="${u.cargo}" 
+                            data-whats="${u.whatsapp}">
+                        ${u.nome}
+                    </option>`;
+            });
+
+            document.getElementById('info-cargo').innerText = '-';
+            document.getElementById('info-whats').innerText = '-';
+
+            select.onchange = () => {
+                const opt = select.options[select.selectedIndex];
+                if(opt.value) {
+                    document.getElementById('info-cargo').innerText = opt.getAttribute('data-cargo') || '-';
+                    document.getElementById('info-whats').innerText = opt.getAttribute('data-whats') || '-';
+                } else {
+                    document.getElementById('info-cargo').innerText = '-';
+                    document.getElementById('info-whats').innerText = '-';
+                }
+            };
+
+            new bootstrap.Modal(document.getElementById('modalEmprestar')).show();
+        }
+
+        async function confirmarEmprestimo() {
+            const id = document.getElementById('emprestar-chave-id').value;
+            const select = document.getElementById('select-professor');
+            const nome = select.value;
+            const opt = select.options[select.selectedIndex];
+            
+            if(!nome) return alert("Selecione alguém!");
+
+            const cargo = opt.getAttribute('data-cargo');
+
+            await fetch(`/api/chaves/${id}/emprestar`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nome, cargo })
+            });
+
+            location.reload();
+        }
+
+        // 4. Devolução
+        async function devolverChave(id) {
+            if(!confirm("A chave foi devolvida?")) return;
+            await fetch(`/api/chaves/${id}/devolver`, { method: 'PUT' });
+            carregarDados();
+        }
+
+        // 5. Gerenciar Professores
+        function abrirModalProfessores() {
+            const tbody = document.getElementById('lista-professores');
+            tbody.innerHTML = '';
+            
+            usuariosCache.forEach(u => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="fw-bold">${u.nome}</td>
+                        <td><span class="badge bg-light text-dark border">${u.cargo}</span></td>
+                        <td>${u.whatsapp || '<span class="text-muted">-</span>'}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-danger border-0" onclick="removeProfessor(${u.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            new bootstrap.Modal(document.getElementById('modalProfessores')).show();
+        }
+
+        async function addProfessor() {
+            const nome = document.getElementById('novo-nome').value;
+            const cargo = document.getElementById('novo-cargo').value;
+            const whatsapp = document.getElementById('novo-whatsapp').value;
+
+            if(!nome || !cargo) return alert("Nome e Cargo são obrigatórios");
+
+            await fetch('/api/usuarios', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({nome, cargo, whatsapp})
+            });
+            location.reload();
+        }
+        
+        async function removeProfessor(id) {
+            if(!confirm("Tem certeza que quer remover este cadastro?")) return;
+            await fetch(`/api/usuarios/${id}`, { method: 'DELETE' });
+            location.reload();
+        }
+
+        // Inicia
+        carregarDados();
+    </script>
+</body>
+</html>
