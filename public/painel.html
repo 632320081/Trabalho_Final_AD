@@ -19,7 +19,6 @@
         .status-livre { color: #198754; font-weight: 800; font-size: 0.9rem; }
         .status-ocupada { color: #dc3545; font-weight: 800; font-size: 0.9rem; }
         
-        /* Ajuste para inputs focados ficarem laranjas */
         .form-control:focus, .form-select:focus {
             border-color: var(--cor-primary);
             box-shadow: 0 0 0 0.25rem rgba(255, 102, 0, 0.25);
@@ -147,17 +146,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // --- LÓGICA DO SISTEMA ---
         let usuariosCache = [];
 
-        // 1. Carregar Dados Iniciais
         async function carregarDados() {
             try {
-                // Carrega usuários
                 const resUser = await fetch('/api/usuarios');
                 usuariosCache = await resUser.json();
 
-                // Carrega salas
                 const resSalas = await fetch('/api/dados');
                 const dados = await resSalas.json();
                 renderizarSalas(dados);
@@ -167,7 +162,6 @@
             }
         }
 
-        // 2. Renderizar Cards
         function renderizarSalas(lista) {
             const container = document.getElementById('container-salas');
             container.innerHTML = '';
@@ -238,7 +232,6 @@
             }
         }
 
-        // 3. Empréstimo
         function abrirModalEmprestar(id) {
             document.getElementById('emprestar-chave-id').value = id;
             
@@ -290,14 +283,12 @@
             location.reload();
         }
 
-        // 4. Devolução
         async function devolverChave(id) {
             if(!confirm("A chave foi devolvida?")) return;
             await fetch(`/api/chaves/${id}/devolver`, { method: 'PUT' });
             carregarDados();
         }
 
-        // 5. Gerenciar Professores
         function abrirModalProfessores() {
             const tbody = document.getElementById('lista-professores');
             tbody.innerHTML = '';
@@ -340,7 +331,6 @@
             location.reload();
         }
 
-        // Inicia
         carregarDados();
     </script>
 </body>

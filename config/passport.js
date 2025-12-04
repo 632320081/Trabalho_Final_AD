@@ -11,14 +11,13 @@ passport.use(new GoogleStrategy(
         callbackURL: process.env.CALLBACK_URL
     },
     (accessToken, refreshToken, profile, done) => {
-        // Verifica se existe email
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
 
         const user = {
             id: profile.id,
             nome: profile.displayName,
             email: email,
-            isAdmin: (email === ADM_EMAIL) // Define se é admin
+            isAdmin: (email === ADM_EMAIL)
         };
 
         return done(null, user);

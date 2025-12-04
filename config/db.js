@@ -7,7 +7,6 @@ const db = mysql.createPool({
     database: 'controle_chaves'
 });
 
-// Teste rápido de conexão (opcional, ajuda a ver no terminal se funcionou)
 db.getConnection((err, connection) => {
     if (err) {
         console.error('Erro ao conectar no Banco de Dados:', err.code);
